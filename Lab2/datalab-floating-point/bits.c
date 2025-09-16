@@ -175,7 +175,7 @@ NOTES:
  *   Rating: 2
  */
 int negate(int x) {
-  return 2;
+  return ~x + 1;
 }
 /* 
  * isLess - if x < y  then return 1, else return 0 
@@ -185,7 +185,7 @@ int negate(int x) {
  *   Rating: 3
  */
 int isLess(int x, int y) {
-  return 2;
+  return (!!(((x ^ y) >> 31) & (x >> 31))) | (!!((~((x ^ y) >> 31)) & ((x + ~y + 1) >> 31)));
 }
 /* 
  * float_abs - Return bit-level equivalent of absolute value of f for
@@ -199,7 +199,10 @@ int isLess(int x, int y) {
  *   Rating: 2
  */
 unsigned float_abs(unsigned uf) {
-  return 2;
+    unsigned e = (uf << 1) >> 24;
+    unsigned f = (uf << 9) >> 9;
+    if (e == 255 && f != 0) return uf;
+    else return (uf << 1) >> 1;
 }
 /* 
  * float_twice - Return bit-level equivalent of expression 2*f for
@@ -213,7 +216,12 @@ unsigned float_abs(unsigned uf) {
  *   Rating: 4
  */
 unsigned float_twice(unsigned uf) {
-  return 2;
+    unsigned s = uf >> 31;
+    unsigned e = (uf << 1) >> 24;
+    unsigned f = (uf << 9) >> 9;
+    if (e == 255) return uf;
+    else if (e == 0) return (s << 31) | (f << 1);
+    else return (s << 31) | ((e+1) << 23) | f;
 }
 /* 
  * float_i2f - Return bit-level equivalent of expression (float) x
@@ -225,7 +233,7 @@ unsigned float_twice(unsigned uf) {
  *   Rating: 4
  */
 unsigned float_i2f(int x) {
-  return 2;
+    return 2;
 }
 /* 
  * float_f2i - Return bit-level equivalent of expression (int) f
@@ -240,5 +248,17 @@ unsigned float_i2f(int x) {
  *   Rating: 4
  */
 int float_f2i(unsigned uf) {
-  return 2;
+    unsigned s = uf >> 31;
+    unsigned e = (uf << 1) >> 24;
+    unsigned f = (uf << 9) >> 9;
+    int i;
+
+    if (e == 255 || e > 157) return 0x80000000u;
+    if (e < 127) return 0;
+
+    f |= (1 << 23);
+    i = (f << (e - 127)) >> 23;
+    if (s == 1) i = -i;
+
+    return i;
 }
