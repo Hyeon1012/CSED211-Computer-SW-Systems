@@ -200,10 +200,10 @@ int isLess(int x, int y) {
  */
 unsigned float_abs(unsigned uf) {
 
-    unsigned e = (uf << 1) >> 24;
+    unsigned exp = (uf << 1) >> 24;
     unsigned f = (uf << 9) >> 9;
 
-    if (e == 255 && f != 0) return uf;
+    if (exp == 255 && f != 0) return uf;
     else return (uf << 1) >> 1;
 }
 /* 
@@ -220,12 +220,12 @@ unsigned float_abs(unsigned uf) {
 unsigned float_twice(unsigned uf) {
 
     unsigned s = uf >> 31;
-    unsigned e = (uf << 1) >> 24;
+    unsigned exp = (uf << 1) >> 24;
     unsigned f = (uf << 9) >> 9;
 
-    if (e == 255) return uf;
-    else if (e == 0) return (s << 31) | (f << 1);
-    else return (s << 31) | ((e+1) << 23) | f;
+    if (exp == 255) return uf;
+    else if (exp == 0) return (s << 31) | (f << 1);
+    else return (s << 31) | ((exp + 1) << 23) | (exp == 254 ? 0 : f);
 }
 /* 
  * float_i2f - Return bit-level equivalent of expression (float) x
@@ -239,7 +239,7 @@ unsigned float_twice(unsigned uf) {
 unsigned float_i2f(int x) {
 
     unsigned s = x < 0;
-    unsigned f, e, ux, round;
+    unsigned f, exp, ux, round;
     unsigned check = 0x80000000u;
     int length = 32;
 
@@ -256,9 +256,9 @@ unsigned float_i2f(int x) {
     f += round;
     f = (f << 8) >> 9; // 23 bits
 
-    e = 126 + length; // <=> 127 + (length - 1)
+    exp = 126 + length; // <=> 127 + (length - 1)
 
-    return (s << 31) | ((e + (round & !f)) << 23) | f; // if (f) was rounded up and (f) is 0...0 then we must use (e + 1) instead of (e)
+    return (s << 31) | ((exp + (round & !f)) << 23) | f; // if (f) was rounded up and (f) is 0...0 then we must use (exp + 1) instead of (exp)
 }
 /* 
  * float_f2i - Return bit-level equivalent of expression (int) f
@@ -275,15 +275,16 @@ unsigned float_i2f(int x) {
 int float_f2i(unsigned uf) {
 
     unsigned s = uf >> 31;
-    unsigned e = (uf << 1) >> 24;
+    unsigned exp = (uf << 1) >> 24;
     unsigned f = (uf << 9) >> 9;
     int i;
 
-    if (e == 255 || e > 157) return 0x80000000u; // 127(BIAS) + 30
-    if (e < 127) return 0;
+    if (exp > 157) return 0x80000000u; // 127(BIAS) + 30
+    if (exp < 127) return 0;
 
     f |= (1 << 23);
-    i = (f << (e - 127)) >> 23;
+    if (exp > 150) i = f << (exp - 150); // 127(BIAS) + 23
+    else i = f >> (150 - exp);
     if (s == 1) i = -i;
 
     return i;
