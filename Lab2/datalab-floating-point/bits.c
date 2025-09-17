@@ -285,6 +285,7 @@ int float_f2i(unsigned uf) {
     f |= (1 << 23);
     if (exp > 150) i = f << (exp - 150); // 127(BIAS) + 23
     else i = f >> (150 - exp);
+
     if (s == 1) i = -i;
 
     return i;
