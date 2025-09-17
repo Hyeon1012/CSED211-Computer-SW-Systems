@@ -185,7 +185,7 @@ int negate(int x) {
  *   Rating: 3
  */
 int isLess(int x, int y) {
-    return (!!(((x ^ y) >> 31) & (x >> 31))) | (!!((~((x ^ y) >> 31)) & ((x + ~y + 1) >> 31)));
+    return (!!(((x ^ y) >> 31) & (x >> 31))) | (!!((~((x ^ y) >> 31)) & (((x + ~y) + 1) >> 31)));
 }
 /* 
  * float_abs - Return bit-level equivalent of absolute value of f for
